@@ -14,27 +14,13 @@ import subprocess
 board_type = sys.argv[-1]
 
 global temp
-global soll
-global now
 
-soll = 17                       # Solltemperatur setzen!
 raum = "1214"                   # Raumnummer setzen!
 
 d = datetime
-channels = [22, 18, 16, 15, 13, 11]
-#           G25 G24 G23 G22 G27 G17
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-
-# setze Output der jeweiligen GPIO-Channel
-i = 0
-for pin in channels:
-    if int(board_type) == 1 and i % 2 == 0:
-        GPIO.setup(pin, GPIO.OUT)
-    elif int(board_type) == 2 and i % 2 == 1:
-         GPIO.setup(pin, GPIO.OUT)
-    i = i + 1
 
 GPIO.setup(7, GPIO.OUT)
 spi = spidev.SpiDev()
@@ -62,7 +48,7 @@ def write_data_to_db(temp):
    try:
         conn = MySQLdb.connect(host="10.16.103.202",user="r1214",passwd="BGyPLrtGyVZG8Vyj",db="messung")
         cur = conn.cursor()
-        sql = ("""INSERT INTO temp (room,temp,soll) VALUES (%s,%s,%s)""", (raum,round(temp, 1),round(soll, 1)))
+        sql = ("""INSERT INTO temp (room,temp) VALUES (%s,%s,)""", (raum,round(temp, 1)))
         cur.execute(*sql)
         conn.commit()
         conn.close()
@@ -75,5 +61,5 @@ sleep(60 * 5 * (int(board_type)-1) + 30)
 
 while True:
     adc_temp = (get_adc(0))     # hole Rohdaten fuer Temperatur
-    display(adc_temp)   # umrechnen der Rohdaten
-    write_data_to_db(temp)  # schreibe Werte in Datenbank
+    display(adc_temp) 			# umrechnen der Rohdaten
+    write_data_to_db(temp)  	# schreibe Werte in Datenbank

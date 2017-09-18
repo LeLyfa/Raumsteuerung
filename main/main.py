@@ -12,25 +12,12 @@ import time
 import subprocess
 
 raum = "1214"                   # Raumnummer setzen
-
+global co2
+global temp
 d = datetime
-channels = [22, 18, 16, 15, 13, 11]
-#           G25 G24 G23 G22 G27 G17
-
-
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-
-# setze Output der jeweiligen GPIO-Channel
-i = 0
-for pin in channels:
-    if int(board_type) == 1 and i % 2 == 0:
-        GPIO.setup(pin, GPIO.OUT)
-    elif int(board_type) == 2 and i % 2 == 1:
-         GPIO.setup(pin, GPIO.OUT)
-    i = i + 1
-
 GPIO.setup(7, GPIO.OUT)
 GPIO.setup(32, GPIO.OUT)  #Datenuebertragung
 
@@ -46,27 +33,27 @@ def get_adc(channel):
                 res = spi.xfer([1,144,0])
         if 0 <= res[1] <= 3:
                 return ((((res[1] * 256) + res[2]) * 0.00322) * 3)
-
-def display(adc_co2):
-    global datetime
-    global co2
-    co2 = adc_co2 * 200
-    datetime = (time.strftime("%Y-%m-%d ") + time.strftime("%H:%M:00"))
-    print (time.strftime("%H:%M:%S",time.localtime()),';',"{0:04f}".format(adc_co2),';',co2)
-
-def write_data_to_db(co2):
+				
+def write_data_to_db(temp, co2):
    print("writing data to DB...")
    try:
         conn = MySQLdb.connect(host="10.16.103.202",user="r1214",passwd="BGyPLrtGyVZG8Vyj",db="messung")
         cur = conn.cursor()
-        sql = ("""INSERT INTO co2 (room,co2) VALUES (%s,%s)""", (raum,round(co2, 1)))
+        sql = ("""INSERT INTO temp (room,temp,co2) VALUES (%s,%s,%s)""", (raum,round(temp, 1),round(co2, 1)))
         cur.execute(*sql)
         conn.commit()
         conn.close()
         print("write successful!")
    except:
         print("could not write data to DB")
-
+		
+def display(adc_temp, adc_co2):
+    global datetime
+    temp = adc_temp * 5
+    co2 = adc_co2 * 200
+    datetime = (time.strftime("%Y-%m-%d ") + time.strftime("%H:%M:00"))
+    print (time.strftime("%H:%M:%S",time.localtime()),';',"{0:04f}".format(adc_temp),';', temp,';', "{0:04f}".format(adc_co2),';',co2)
+	
 def sendCo2LedAndPause():
     GPIO.output(32, GPIO.HIGH)
     if(co2 < 1000):
@@ -82,11 +69,9 @@ def sendCo2LedAndPause():
         GPIO.output(32, GPIO.LOW)
 		sleep(5*60-3)
 
-
-sleep(60 * 5 * (int(board_type)-1) + 30)
-
 while True:
+	adc_temp = (get_adc(0))     # hole Rohdaten fuer Temperatur
     adc_co2 = (get_adc(1))      # hole Rohdaten fuer Co2-Werte
     display(adc_temp,adc_co2)   # umrechnen der Rohdaten
+    sendCO2LED()                # gebe Daten an die LED
     write_data_to_db(temp,co2)  # schreibe Werte in Datenbank
-	sendCo2LedAndPause()        # gebe Daten an die LED
