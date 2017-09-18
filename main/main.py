@@ -24,19 +24,10 @@ GPIO.setup(32, GPIO.OUT)  #Datenuebertragung
 spi = spidev.SpiDev()
 spi.open(0,1)
 
-def get_adc(channel):
-        GPIO.output(7, GPIO.HIGH)
-        GPIO.output(7, GPIO.LOW)
-        if channel == 0:
-                res = spi.xfer([1,128,0])
-        elif channel == 1:
-                res = spi.xfer([1,144,0])
-        if 0 <= res[1] <= 3:
-                return ((((res[1] * 256) + res[2]) * 0.00322) * 3)
-				
 def write_data_to_db(temp, co2):
    print("writing data to DB...")
    try:
+		# MySQL Konfiguration vornehmen
         conn = MySQLdb.connect(host="10.16.103.202",user="r1214",passwd="BGyPLrtGyVZG8Vyj",db="messung")
         cur = conn.cursor()
         sql = ("""INSERT INTO temp (room,temp,co2) VALUES (%s,%s,%s)""", (raum,round(temp, 1),round(co2, 1)))
@@ -46,6 +37,16 @@ def write_data_to_db(temp, co2):
         print("write successful!")
    except:
         print("could not write data to DB")
+
+def get_adc(channel):
+        GPIO.output(7, GPIO.HIGH)
+        GPIO.output(7, GPIO.LOW)
+        if channel == 0:
+                res = spi.xfer([1,128,0])
+        elif channel == 1:
+                res = spi.xfer([1,144,0])
+        if 0 <= res[1] <= 3:
+                return ((((res[1] * 256) + res[2]) * 0.00322) * 3)
 		
 def display(adc_temp, adc_co2):
     global datetime
@@ -73,5 +74,5 @@ while True:
 	adc_temp = (get_adc(0))     # hole Rohdaten fuer Temperatur
     adc_co2 = (get_adc(1))      # hole Rohdaten fuer Co2-Werte
     display(adc_temp,adc_co2)   # umrechnen der Rohdaten
-    sendCO2LED()                # gebe Daten an die LED
+    sendCO2LED()                # gebe Daten an Arduino
     write_data_to_db(temp,co2)  # schreibe Werte in Datenbank

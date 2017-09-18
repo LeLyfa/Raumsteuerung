@@ -7,8 +7,7 @@ uint8_t clockPin = 3;
 Adafruit_WS2801 strip = Adafruit_WS2801(1, dataPin, clockPin);
 
 void setup() {
-
-  pinMode(12, INPUT);
+  pinMode(12, INPUT);       // Dateneingang
 
   strip.begin();
   strip.show();
@@ -18,7 +17,7 @@ void setup() {
 void loop() {
   if (digitalRead(12) == HIGH) {
 
-    delay(1200);
+    delay(1200);            // 200ms extra um Zeitfehler zu vermeiden
 
     if (digitalRead(12) == LOW) {
       gruen();
@@ -43,7 +42,7 @@ void loop() {
   delay(10);
 }
 
-// Bei den LED Treibern ist das Formst RBG
+// Bei den von uns verwendeteten LEDs ist das Format RBG anstatt des üblichen RGB Formats
 
 void gruen() {
   strip.setPixelColor(0, 0, 0, 255);
