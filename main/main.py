@@ -12,8 +12,6 @@ import time
 import subprocess
 
 raum = "1214"                   # Raumnummer setzen
-global co2
-global temp
 d = datetime
 
 GPIO.setwarnings(False)
@@ -27,10 +25,10 @@ spi.open(0,1)
 def write_data_to_db(temp, co2):
    print("writing data to DB...")
    try:
-		# MySQL Konfiguration vornehmen
+	# MySQL Konfiguration vornehmen
         conn = MySQLdb.connect(host="10.16.103.202",user="r1214",passwd="BGyPLrtGyVZG8Vyj",db="messung")
         cur = conn.cursor()
-        sql = ("""INSERT INTO temp (room,temp,co2) VALUES (%s,%s,%s)""", (raum,round(temp, 1),round(co2, 1)))
+        sql = ("""INSERT INTO temp (room,datetime,temp,co2,soll) VALUES (%s,%s,%s,%s,%s)""", (raum,datetime,round(temp, 1),round(co2, 1),0))
         cur.execute(*sql)
         conn.commit()
         conn.close()
@@ -50,6 +48,8 @@ def get_adc(channel):
 		
 def display(adc_temp, adc_co2):
     global datetime
+    global co2
+    global temp
     temp = adc_temp * 5
     co2 = adc_co2 * 200
     datetime = (time.strftime("%Y-%m-%d ") + time.strftime("%H:%M:00"))
@@ -60,19 +60,19 @@ def sendCo2LedAndPause():
     if(co2 < 1000):
         sleep(1)
         GPIO.output(32, GPIO.LOW)
-		sleep(5*60-3)
+	sleep(5*60-3)
     elif(co2 < 1400):
         sleep(2)
         GPIO.output(32, GPIO.LOW)
-		sleep(5*60-2)
+	sleep(5*60-2)
     else:
         sleep(3)
         GPIO.output(32, GPIO.LOW)
-		sleep(5*60-3)
+	sleep(5*60-3)
 
 while True:
-	adc_temp = (get_adc(0))     # hole Rohdaten fuer Temperatur
+    adc_temp = (get_adc(0))     # hole Rohdaten fuer Temperatur
     adc_co2 = (get_adc(1))      # hole Rohdaten fuer Co2-Werte
     display(adc_temp,adc_co2)   # umrechnen der Rohdaten
-    sendCO2LED()                # gebe Daten an Arduino
     write_data_to_db(temp,co2)  # schreibe Werte in Datenbank
+    sendCo2LedAndPause()        # gebe Daten an Arduino und pausiere fuer 5 Minuten
