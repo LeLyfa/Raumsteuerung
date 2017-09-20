@@ -11,7 +11,7 @@ from time import sleep
 import time
 import subprocess
 
-raum = "1214"                   # Raumnummer setzen
+raum = ""                   # Raumnummer setzen
 d = datetime
 
 GPIO.setwarnings(False)
@@ -60,7 +60,7 @@ def sendCo2LedAndPause():
     if(co2 < 1000):
         sleep(1)
         GPIO.output(32, GPIO.LOW)
-	sleep(5*60-3)
+	sleep(5*60-1)
     elif(co2 < 1400):
         sleep(2)
         GPIO.output(32, GPIO.LOW)
